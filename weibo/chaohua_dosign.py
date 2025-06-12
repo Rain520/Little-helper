@@ -24,7 +24,8 @@ def get_super_info_list():
                             headers=headers)
     if 'url' in response.text:
         print('cookie失效，请重新获取')
-        email_sender.send_QQ_email_plain('微博超话签到失败！cookie失效，请更新')
+        # email_sender.send_QQ_email_plain('微博超话签到失败！cookie失效，请更新')
+        email_sender.send_telegram('微博超话签到失败！cookie失效，请更新')
         exit(0)
     super_list = response.json()['data']['list']
     super_info_list = []
@@ -98,7 +99,8 @@ def main():
     total_time = end_time - start_time
     results.append(f"{len(super_info_list)}个超话签到完成总耗时：{total_time:.2f}秒")
     final_result = ''.join(results)
-    email_sender.send_QQ_email_plain(final_result)
+    # email_sender.send_QQ_email_plain(final_result)
+    email_sender.send_telegram(final_result)
 
 
 if __name__ == '__main__':
