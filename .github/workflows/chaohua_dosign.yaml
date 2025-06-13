@@ -1,12 +1,4 @@
-name: ch_dosing
-# 测试的话打开这个来测试变量值之类的是否填写正确
-#on:
-# push:  # 任何推送到仓库都会触发这个工作流
-
-#on:
-#  schedule:
-#    - cron: '50 10 * * *' # 10对应的是北京时间晚上六点 50是分钟 表示每天晚上六点五十执行，可以改成任意时间测试
-#
+name: 微博超话签到
 on:
   workflow_dispatch:  # 允许手动触发
   schedule: # 每天下午12点执行 时差为 +8
@@ -23,12 +15,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
           pip install requests pytz
 
-      - name: Run python script
+      - name: 执行脚本
         env:
           SUB_TOKEN: ${{ secrets.SUB_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -36,4 +28,22 @@ jobs:
           # EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
         run: |
           python weibo/chaohua_dosign.py || echo "Script failed with exit code $?"
-        
+
+      - name: 空提交保持活跃（仅定时触发）
+        if: success() && github.event_name == 'schedule'
+        run: |
+          git config --local user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git remote set-url origin https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}
+          git pull --rebase --autostash
+          git commit --allow-empty -m "CHORE: 保持运行.."
+          git push
+
+      - name: 清理旧的 Workflow 记录
+        if: always()
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 60
